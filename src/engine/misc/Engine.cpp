@@ -172,7 +172,10 @@ namespace RG3GE {
 	/*==============================================================================
 	 * RG3GE::Shape2D
 	 *============================================================================*/
-	Shape2D::Shape2D() :vertexCnt(0), vertexBuffer(0), shape(PolyShapes::POINTS) { }
+	Shape2D::Shape2D() 
+    : shape(PolyShapes::POINTS) 
+    , vertexCnt(0), vertexBuffer(0)
+  {}
 
 	/*==============================================================================
 	 * RG3GE::Engine
@@ -402,18 +405,28 @@ namespace RG3GE {
 	}
 
 	Engine::Engine()
-		: window(nullptr), keepRunning(false), borderColor(Engine::BLACK)
-		, _deltaTime(0.0f), context(nullptr)
-		, _gl_vertex_position_attribute(0), _gl_vertex_color_attribute(1), _gl_vertexUV_attribute(2)
-
-		, _gl_texture_uniform(-1), _gl_texture_enable_uniform(-1)
-
-		, _gl_translation_uniform(-1), _gl_origin_uniform(-1)
-		, _gl_zlayer_uniform(-1), _gl_angle_uniform(-1)
-		, _gl_drawcolor_uniform(-1), _gl_scale_uniform(-1)
-		, _gl_v2screen_uniform(-1), _gl_v2screenscale_uniform(-1)
-		, _gl_v2screenoffset_uniform(-1), event(), pixel(), ticks(0)
+    : borderColor(Engine::BLACK)
 		, currentTint(1.0f, 1.0f, 1.0f, 1.0f)
+		, _deltaTime(0.0f)
+    , windowSize(0)
+    , origWindowSize(0)
+    , windowOffset(0)
+    , windowScale(0)
+    , ticks(0)
+		, _gl_vertex_position_attribute(0)
+    , _gl_vertex_color_attribute(1)
+    , _gl_vertexUV_attribute(2)
+    , _gl_texture_enable_uniform(-1)
+		, _gl_texture_uniform(-1)
+		, _gl_translation_uniform(-1)
+    , _gl_origin_uniform(-1)
+		, _gl_zlayer_uniform(-1)
+    , _gl_angle_uniform(-1)
+		, _gl_drawcolor_uniform(-1)
+    , _gl_scale_uniform(-1)
+		, _gl_v2screen_uniform(-1)
+    , _gl_v2screenscale_uniform(-1)
+		, _gl_v2screenoffset_uniform(-1)
 	{}
 
 	Engine::~Engine() {

@@ -238,8 +238,8 @@ namespace RG3GE {
 
 		Color currentTint;
 
-		SDL_Window* window;
 		SDL_GLContext context;
+		SDL_Window* window;
 
 		bool keepRunning;
 		SDL_Event event;
