@@ -3,6 +3,8 @@
 #include <SDL2/SDL.h>
 #include <functional>
 #include <vector>
+#include <string>
+#include <iostream>
 #include <unordered_set>
 #include <unordered_map>
 #include <GL/glew.h>
@@ -69,6 +71,7 @@ namespace RG3GE {
 			arr[1] = this->y;
 		}
 	};
+
 
 	/**
 	 * This should not need an explaination
@@ -187,6 +190,7 @@ namespace RG3GE {
 		void DestroyShape2D(Shape2D);
 
 		// Basic Draw Functions
+		void DrawPixel(int x, int y, Color c, float zLayer = 0);
 		void DrawRectFilled(int x, int y, int w, int h, Color c, float zLayer = 0);
 		void DrawLine(int startx, int starty, int endx, int endy, Color c, int tickness = 1, float zLayer = 0);
 
@@ -217,11 +221,17 @@ namespace RG3GE {
 		/*==============================================================================
 		 * Keyboard functions
 		 *============================================================================*/
-		bool isPressed(SDL_Keycode code);
-		bool isHeld(SDL_Keycode code);
-		bool isReleased(SDL_Keycode code);
+		bool keyPressed(SDL_Keycode code);
+		bool keyHeld(SDL_Keycode code);
+		bool keyReleased(SDL_Keycode code);
+
+		bool mousePressed (Uint8 code);
+		bool mouseHeld    (Uint8 code);
+		bool mouseReleased(Uint8 code);
 
 		virtual ~Engine();
+
+		Vec2<float> mousePosition;
     
 	private:
 
@@ -285,6 +295,11 @@ namespace RG3GE {
 		std::unordered_set<SDL_Keycode> keys_released;
 		std::unordered_set<SDL_Keycode> keys_held;
 		SDL_Keycode last_pressed;
+
+		std::unordered_set<Uint8> mouse_pressed;
+		std::unordered_set<Uint8> mouse_released;
+		std::unordered_set<Uint8> mouse_held;
+
 	};
 
 

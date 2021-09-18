@@ -53,6 +53,8 @@ int main(int argc, char** argv) {
 		game->borderColor = orange;
 		float timePass = 0.0f;
 
+		bool mouseEnabled = false;
+
 		while (game->windowTick()) {
 
 			float deltaTime = game->deltaTime();
@@ -62,23 +64,40 @@ int main(int argc, char** argv) {
 			for (auto t : scalers)     t->scale = sin(timePass) + 2.0f;
 			for (auto t : halfscalers) t->scale = { 1.0f, sin(timePass) + 2.0f } ;
 
+			tr_enemy_ship.position = game->mousePosition;
+
 			game->ClearScreen(darkcyan);
 
 			game->SubmitForRender(spr_player_ship, tr_player_ship);
-			game->SubmitForRender(spr_enemy_ship,  tr_enemy_ship);
+			game->SubmitForRender(spr_enemy_ship,  tr_enemy_ship, -0.99999);
 			game->SubmitForRender(ships, tr_spritesheet, 0.0001f);
 			game->SubmitForRender(ship, tr_shape);
 
-			if(game->isPressed(SDLK_a)) 
+		
+			if(game->keyPressed(SDLK_SPACE))
+				switch (mouseEnabled) {
+				case false:
+					SDL_ShowCursor(SDL_ENABLE);
+					Debug("Enable Mouse");
+					mouseEnabled = true;
+					break;
+				case true:
+					SDL_ShowCursor(SDL_DISABLE);
+					Debug("Disable Mouse");
+					mouseEnabled = false;
+					break;
+				}
+
+			if(game->keyPressed(SDLK_a)) 
 				Debug("Pressed A");
 
-			if(game->isHeld(SDLK_a)) {
+			if(game->keyHeld(SDLK_a)) {
 				game->DrawLine(0, 0, 256, 256, green, 1, 0.9999f);
 				game->DrawLine(256, 0, 0, 256, green, 1, 0.9999f);
 				game->DrawRectFilled(112, 112, 32, 32, orange, 0.9999f);
 			}
 
-			if (game->isReleased(SDLK_a))
+			if (game->keyReleased(SDLK_a))
 				Debug("Released A");
 
 

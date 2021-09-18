@@ -108,6 +108,13 @@ namespace RG3GE {
 	}
 #pragma endregion
 
+#pragma region RG3GE::Vec2
+	std::ostream& operator << (std::ostream& os, const Vec2<int>& v) { os << " Vec2<int>(" << v.x << ", " << v.y << ")"; return os; }
+	std::ostream& operator << (std::ostream& os, const Vec2<float>& v) { os << " Vec2<float>(" << v.x << ", " << v.y << ")"; return os; }
+	std::ostream& operator << (std::ostream& os, const Vec2<double>& v) { os << " Vec2<double>(" << v.x << ", " << v.y << ")"; return os; }
+	std::ostream& operator << (std::ostream& os, const Vec2<short>& v) { os << " Vec2<short>(" << v.x << ", " << v.y << ")"; return os; }
+#pragma endregion
+
 #pragma region RG3GE::Angle
 	Angle::Angle(double ang) {
 		angle = ang * PI2 / 360.0;
@@ -223,6 +230,7 @@ namespace RG3GE {
 
 		SDL_SetHintWithPriority(SDL_HINT_RENDER_VSYNC, "0", SDL_HINT_OVERRIDE);
 
+		SDL_ShowCursor(SDL_DISABLE);
 
 		Engine* e = new Engine();
 		_instance = e;
@@ -447,20 +455,41 @@ namespace RG3GE {
 
 		if (_deltaTime > 0) {
 
-			for (auto it : keys_pressed) {
+			for (auto it : keys_pressed)
 				keys_held.emplace(it);
-			}
+			
+			for (auto it : mouse_pressed)
+				mouse_held.emplace(it);
 
 			keys_pressed.clear();
 			keys_released.clear();
+			mouse_pressed.clear();
+			mouse_released.clear();
 
 			while (keepRunning && SDL_PollEvent(&event)) {
 				switch (event.type) {
 					// TODO: Process other events
 				case SDL_QUIT: keepRunning = false; break;
 
+				case SDL_MOUSEBUTTONDOWN: {
+					mouse_pressed.emplace(event.button.button);
+				} break;
+
+				case SDL_MOUSEBUTTONUP: {
+					mouse_released.emplace(event.button.button);
+					auto it = mouse_held.find(event.key.keysym.sym);
+					if (it != mouse_held.end()) mouse_held.erase(it);
+				} break;
+
+				case SDL_MOUSEMOTION: {
+					mousePosition.x = (float)event.motion.x;
+					mousePosition.y = (float)event.motion.y;
+					mousePosition -= windowOffset / 2;
+					mousePosition /= windowScale;
+				}  break;
+
 				case SDL_KEYDOWN: {
-					if(event.key.keysym.sym != last_pressed)
+					if (event.key.keysym.sym != last_pressed)
 						keys_pressed.emplace(event.key.keysym.sym);
 
 					last_pressed = event.key.keysym.sym;
@@ -471,7 +500,7 @@ namespace RG3GE {
 					auto it = keys_held.find(event.key.keysym.sym);
 					if (it != keys_held.end()) keys_held.erase(it);
 
-					if (event.key.keysym.sym == last_pressed) last_pressed = 0; 
+					if (event.key.keysym.sym == last_pressed) last_pressed = 0;
 				} break;
 
 				case SDL_WINDOWEVENT:
@@ -573,11 +602,15 @@ namespace RG3GE {
 	}
 #pragma endregion
 
-#pragma region RG3GE::Engine::Keyboard Input
+#pragma region RG3GE::Engine::Input - Functions
 
-	bool Engine::isPressed(SDL_Keycode code) { return keys_pressed.find(code) != keys_pressed.end(); }
-	bool Engine::isReleased(SDL_Keycode code) { return keys_released.find(code) != keys_released.end(); }
-	bool Engine::isHeld(SDL_Keycode code) { return keys_held.find(code) != keys_held.end(); }
+	bool Engine::keyPressed(SDL_Keycode code) { return keys_pressed.find(code) != keys_pressed.end(); }
+	bool Engine::keyReleased(SDL_Keycode code) { return keys_released.find(code) != keys_released.end(); }
+	bool Engine::keyHeld(SDL_Keycode code) { return keys_held.find(code) != keys_held.end(); }
+
+	bool Engine::mousePressed(Uint8 code) { return mouse_pressed.find(code)  != mouse_pressed.end();  }
+	bool Engine::mouseHeld(Uint8 code)    { return mouse_held.find(code)     != mouse_held.end();  }
+	bool Engine::mouseReleased(Uint8 code){ return mouse_released.find(code) != mouse_released.end();  }
 
 #pragma endregion
 
@@ -667,6 +700,22 @@ namespace RG3GE {
 		  { 0, (float)round(thickness / 2) + 1.0f },
 		  {(float)scale, (float)thickness },
 		  ang
+		};
+
+		SubmitForRender(pixel, tr, zLayer);
+
+		currentTint = t;
+	}
+
+	void Engine::DrawPixel(int x, int y, Color c, float zLayer) {
+		Color t = currentTint;
+		currentTint = c;
+
+		Transform tr = {
+		  (Vec2<float>)Vec2<int>(x, y),
+		  { 0.0f },
+		  { 1.0f},
+		  0.0f
 		};
 
 		SubmitForRender(pixel, tr, zLayer);
