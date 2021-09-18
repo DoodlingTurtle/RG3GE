@@ -16,17 +16,15 @@ void CheckOGLErr(const char* stmt, const char* fname, int line) {
 	}
 }
 #define GLCALL(stmt) do {\
-	stmt; \
-	CheckOGLErr(#stmt, __FILE__, __LINE__); \
+  stmt; \
+  CheckOGLErr(#stmt, __FILE__, __LINE__); \
 } while(0)
 #else
 #define GLCALL(s) s
 #endif
 
 namespace RG3GE {
-	/*==============================================================================
-	 * Texture Slots
-	 *============================================================================*/
+#pragma region TextureSlots
 	struct TextureSlot {
 		int width = 0, height = 0, colorchannels = 0;
 		unsigned int _gl_texture_id = -1;
@@ -50,10 +48,9 @@ namespace RG3GE {
 		}
 		return -1;
 	}
+#pragma endregion
 
-	/*==============================================================================	
-	 * Renderer
-	 *============================================================================*/
+#pragma region Renderer
 	union RenderSubject {
 		Shape2D shape;
 		Texture texture;
@@ -69,13 +66,17 @@ namespace RG3GE {
 		Color tint;
 
 		RenderJob() : tr(), type(0), zDepth(0), subject(), tint(0.0f, 0.0f, 0.0f, 0.0f) {}
-		RenderJob(Transform tr, unsigned char type, float zDepth, Shape2D shape, Color c) 
+		RenderJob(Transform tr, unsigned char type, float zDepth, Shape2D shape, Color c)
 			: tr(tr), type(type), zDepth(zDepth), tint(c)
-		{ subject.shape = shape; }
+		{
+			subject.shape = shape;
+		}
 
-		RenderJob(Transform tr, unsigned char type, float zDepth, Texture texture, Color c) 
+		RenderJob(Transform tr, unsigned char type, float zDepth, Texture texture, Color c)
 			: tr(tr), type(type), zDepth(zDepth), tint(c)
-		{ subject.texture = texture; }
+		{
+			subject.texture = texture;
+		}
 	};
 	static std::vector<RenderJob> _render_jobs;
 
@@ -105,10 +106,9 @@ namespace RG3GE {
 		_render_jobs.clear();
 		SDL_GL_SwapWindow(window);
 	}
+#pragma endregion
 
-	/*==============================================================================
-	 * Angle
-	 *============================================================================*/
+#pragma region RG3GE::Angle
 	Angle::Angle(double ang) {
 		angle = ang * PI2 / 360.0;
 		direction.x = cos(angle);
@@ -131,7 +131,9 @@ namespace RG3GE {
 		direction.y = sin(angle);
 		return *this;
 	}
+#pragma endregion
 
+#pragma region RG3GE::Color
 	/*==============================================================================
 	 * RG3GE::Color
 	 *============================================================================*/
@@ -142,10 +144,9 @@ namespace RG3GE {
 		: r(r), g(g), b(b), a(a)
 	{}
 	bool Color::operator != (Color& c) { return (c.r != r) || (c.g != g) || (c.b != b) || (c.a != a); }
+#pragma endregion
 
-	/*==============================================================================
-	 * RG3GE::Vertex2D
-	 *============================================================================*/
+#pragma region RG3GE::Vertex2D
 	Vertex2D::Vertex2D()
 		: position(0, 0)
 		, vertexColor(1.0f, 1.0f, 1.0f, 1.0f)
@@ -168,18 +169,16 @@ namespace RG3GE {
 		: position(x, y), vertexColor(1.0f, 1.0f, 1.0f, 1.0f)
 		, uvCoords(uvx, uvy)
 	{}
+#pragma endregion
 
-	/*==============================================================================
-	 * RG3GE::Shape2D
-	 *============================================================================*/
-	Shape2D::Shape2D() 
-    : shape(PolyShapes::POINTS) 
-    , vertexCnt(0), vertexBuffer(0)
-  {}
+#pragma region RG3GE::Shape2D
+	Shape2D::Shape2D()
+		: shape(PolyShapes::POINTS)
+		, vertexCnt(0), vertexBuffer(0)
+	{}
+#pragma endregion
 
-	/*==============================================================================
-	 * RG3GE::Engine
-	 *============================================================================*/
+#pragma region RG3GE::Engine
 	static unsigned int CompileShader(unsigned int type, std::string& src) {
 		unsigned int shader = glCreateShader(type);
 		const char* sr = src.c_str();
@@ -370,10 +369,10 @@ namespace RG3GE {
 		e->_applyScreenSize();
 
 		Vertex2D pixeldata[] = {
-			{0.0f, 0.0f, 0.0f, 0.0f},
-			{1.0f, 0.0f, 1.0f, 0.0f},
-			{1.0f, 1.0f, 1.0f, 1.0f},
-			{0.0f, 1.0f, 0.0f, 1.0f}
+		  {0.0f, 0.0f, 0.0f, 0.0f},
+		  {1.0f, 0.0f, 1.0f, 0.0f},
+		  {1.0f, 1.0f, 1.0f, 1.0f},
+		  {0.0f, 1.0f, 0.0f, 1.0f}
 		};
 		e->pixel = e->CreateShape2D(PolyShapes::QUADS, 4, pixeldata);
 
@@ -405,27 +404,27 @@ namespace RG3GE {
 	}
 
 	Engine::Engine()
-    : borderColor(Engine::BLACK)
+		: borderColor(Engine::BLACK)
 		, currentTint(1.0f, 1.0f, 1.0f, 1.0f)
 		, _deltaTime(0.0f)
-    , windowSize(0)
-    , origWindowSize(0)
-    , windowOffset(0)
-    , windowScale(0)
-    , ticks(0)
+		, windowSize(0)
+		, origWindowSize(0)
+		, windowOffset(0)
+		, windowScale(0)
+		, ticks(0)
 		, _gl_vertex_position_attribute(0)
-    , _gl_vertex_color_attribute(1)
-    , _gl_vertexUV_attribute(2)
-    , _gl_texture_enable_uniform(-1)
+		, _gl_vertex_color_attribute(1)
+		, _gl_vertexUV_attribute(2)
+		, _gl_texture_enable_uniform(-1)
 		, _gl_texture_uniform(-1)
 		, _gl_translation_uniform(-1)
-    , _gl_origin_uniform(-1)
+		, _gl_origin_uniform(-1)
 		, _gl_zlayer_uniform(-1)
-    , _gl_angle_uniform(-1)
+		, _gl_angle_uniform(-1)
 		, _gl_drawcolor_uniform(-1)
-    , _gl_scale_uniform(-1)
+		, _gl_scale_uniform(-1)
 		, _gl_v2screen_uniform(-1)
-    , _gl_v2screenscale_uniform(-1)
+		, _gl_v2screenscale_uniform(-1)
 		, _gl_v2screenoffset_uniform(-1)
 	{}
 
@@ -446,13 +445,34 @@ namespace RG3GE {
 		Uint32 deltaTicks = currentTicks - ticks;
 		_deltaTime = (float)deltaTicks / 1000.0f;
 
-
 		if (_deltaTime > 0) {
+
+			for (auto it : keys_pressed) {
+				keys_held.emplace(it);
+			}
+
+			keys_pressed.clear();
+			keys_released.clear();
+
 			while (keepRunning && SDL_PollEvent(&event)) {
 				switch (event.type) {
 					// TODO: Process other events
-				case SDL_QUIT:
-					keepRunning = false; break;
+				case SDL_QUIT: keepRunning = false; break;
+
+				case SDL_KEYDOWN: {
+					if(event.key.keysym.sym != last_pressed)
+						keys_pressed.emplace(event.key.keysym.sym);
+
+					last_pressed = event.key.keysym.sym;
+				} break;
+
+				case SDL_KEYUP: {
+					keys_released.emplace(event.key.keysym.sym);
+					auto it = keys_held.find(event.key.keysym.sym);
+					if (it != keys_held.end()) keys_held.erase(it);
+
+					if (event.key.keysym.sym == last_pressed) last_pressed = 0; 
+				} break;
 
 				case SDL_WINDOWEVENT:
 					switch (event.window.event) {
@@ -475,11 +495,12 @@ namespace RG3GE {
 
 				// Draw some nice bars, if window aspect does not fit viewport aspect
 				SetTint(borderColor);
+				//TODO: Move to _applyScreenSize
 				if (windowOffset.x > 0 || windowOffset.y > 0) {
 					if (windowOffset.x > windowOffset.y) {
 						Transform tr = {
-							{0, 0}, {0, 0},
-							{-(windowOffset.x / windowScale.x), windowSize.y / windowScale.y}, 0.0f
+						  {0, 0}, {0, 0},
+						  {-(windowOffset.x / windowScale.x), windowSize.y / windowScale.y}, 0.0f
 						};
 						SubmitForRender(pixel, tr, -1);
 
@@ -489,8 +510,8 @@ namespace RG3GE {
 					}
 					else {
 						Transform tr = {
-							{0, 0}, {0, 0},
-							{windowSize.x / windowScale.x,-(windowOffset.y / windowScale.y)}, 0.0f
+						  {0, 0}, {0, 0},
+						  {windowSize.x / windowScale.x,-(windowOffset.y / windowScale.y)}, 0.0f
 						};
 						SubmitForRender(pixel, tr, -1);
 
@@ -550,10 +571,17 @@ namespace RG3GE {
 		GLCALL(glUniform2f(_gl_angle_uniform, rot.x, rot.y));
 		GLCALL(glUniform2f(_gl_scale_uniform, transform.scale.x * 2, transform.scale.y * 2));
 	}
+#pragma endregion
 
-	/*==============================================================================
-	 * Engine::Shape2D
-	 *============================================================================*/
+#pragma region RG3GE::Engine::Keyboard Input
+
+	bool Engine::isPressed(SDL_Keycode code) { return keys_pressed.find(code) != keys_pressed.end(); }
+	bool Engine::isReleased(SDL_Keycode code) { return keys_released.find(code) != keys_released.end(); }
+	bool Engine::isHeld(SDL_Keycode code) { return keys_held.find(code) != keys_held.end(); }
+
+#pragma endregion
+
+#pragma region RG3GE::Engine::Shape2D - Functions
 	Shape2D Engine::CreateShape2D(RG3GE::PolyShapes shape, const std::vector<Vertex2D>& data) {
 		Vertex2D* points = (Vertex2D*)alloca(sizeof(Vertex2D) * data.size());
 
@@ -602,19 +630,18 @@ namespace RG3GE {
 		glPopMatrix();
 		glDisableClientState(GL_VERTEX_ARRAY);
 	}
+#pragma endregion
 
-	/*==============================================================================
-	 * Engine::DrawFunction
-	 *============================================================================*/
+#pragma region RG3GE::Engine::Draw... - Functions
 	void Engine::DrawRectFilled(int x, int y, int w, int h, Color c, float zLayer) {
 		Color t = currentTint;
 
 		currentTint = c;
 		Transform tr = {
-			(Vec2<float>)Vec2<int>(x, y),
-			{ 0 },
-			(Vec2<float>)Vec2<int>(w, h),
-			0
+		  (Vec2<float>)Vec2<int>(x, y),
+		  { 0 },
+		  (Vec2<float>)Vec2<int>(w, h),
+		  0
 		};
 		SubmitForRender(pixel, tr, zLayer);
 		currentTint = t;
@@ -626,8 +653,8 @@ namespace RG3GE {
 		currentTint = c;
 
 		Vec2<double> delta = {
-			(double)endx - (double)startx,
-			(double)endy - (double)starty
+		  (double)endx - (double)startx,
+		  (double)endy - (double)starty
 		};
 
 		double ang = atan2(delta.y, delta.x) * (360.0 / PI2);
@@ -636,20 +663,19 @@ namespace RG3GE {
 		double scale = std::sqrt(delta.x + delta.y);
 
 		Transform tr = {
-			(Vec2<float>)Vec2<int>(startx, starty),
-			{ 0, (float)round(thickness / 2) + 1.0f },
-			{(float)scale, (float)thickness },
-			ang
+		  (Vec2<float>)Vec2<int>(startx, starty),
+		  { 0, (float)round(thickness / 2) + 1.0f },
+		  {(float)scale, (float)thickness },
+		  ang
 		};
 
 		SubmitForRender(pixel, tr, zLayer);
 
 		currentTint = t;
 	}
+#pragma endregion
 
-	/*==============================================================================
-	 * Engine::Texture
-	 *============================================================================*/
+#pragma region RG3GE::Engine::Texture - Functions
 	Texture Engine::TextureLoad(const char* filename) {
 
 		Texture ret;
@@ -756,5 +782,5 @@ namespace RG3GE {
 		DestroyShape2D(t.texture_plane);
 		if (t.slot != -1) freeTextureSlot(t.slot);
 	}
-
+#pragma endregion
 }

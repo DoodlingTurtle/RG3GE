@@ -69,9 +69,18 @@ int main(int argc, char** argv) {
 			game->SubmitForRender(ships, tr_spritesheet, 0.0001f);
 			game->SubmitForRender(ship, tr_shape);
 
-			game->DrawLine(0, 0, 256, 256, green, 1, 0.9999f);
-			game->DrawLine(256, 0, 0, 256, green, 1, 0.9999f);
-			game->DrawRectFilled(112, 112, 32, 32, orange, 0.9999f);
+			if(game->isPressed(SDLK_a)) 
+				Debug("Pressed A");
+
+			if(game->isHeld(SDLK_a)) {
+				game->DrawLine(0, 0, 256, 256, green, 1, 0.9999f);
+				game->DrawLine(256, 0, 0, 256, green, 1, 0.9999f);
+				game->DrawRectFilled(112, 112, 32, 32, orange, 0.9999f);
+			}
+
+			if (game->isReleased(SDLK_a))
+				Debug("Released A");
+
 
 		}
 

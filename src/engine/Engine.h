@@ -214,8 +214,15 @@ namespace RG3GE {
 
 		Texture TextureClone(Texture& src);
 
+		/*==============================================================================
+		 * Keyboard functions
+		 *============================================================================*/
+		bool isPressed(SDL_Keycode code);
+		bool isHeld(SDL_Keycode code);
+		bool isReleased(SDL_Keycode code);
 
 		virtual ~Engine();
+    
 	private:
 
 		/** \brief what this does should be self explainatory
@@ -274,6 +281,10 @@ namespace RG3GE {
 		Shape2D pixel;
 		Shape2D line;
 
+		std::unordered_set<SDL_Keycode> keys_pressed;
+		std::unordered_set<SDL_Keycode> keys_released;
+		std::unordered_set<SDL_Keycode> keys_held;
+		SDL_Keycode last_pressed;
 	};
 
 

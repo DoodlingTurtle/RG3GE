@@ -4,4 +4,4 @@
 
 // Defines how many DrawCalls/Objects can be created, before the Engine has allocate more memory (sloooowwwwww) 
 // DrawCalls are created by all SubmitForRender-Functions, as well as all "Draw..." functions 
-#define ENGINE_DRAW_CALL_LIMIT 1024
+#define ENGINE_DRAW_CALL_LIMIT 2048
