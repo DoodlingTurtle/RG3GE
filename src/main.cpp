@@ -60,20 +60,6 @@ int main(int argc, char** argv) {
 			float deltaTime = game->deltaTime();
 			timePass += deltaTime;
 
-			for (auto t : rotators)    t->rotation += 36.0 * deltaTime; // One turn every 10 Seconds
-			for (auto t : scalers)     t->scale = sin(timePass) + 2.0f;
-			for (auto t : halfscalers) t->scale = { 1.0f, sin(timePass) + 2.0f } ;
-
-			tr_enemy_ship.position = game->mousePosition;
-
-			game->ClearScreen(darkcyan);
-
-			game->SubmitForRender(spr_player_ship, tr_player_ship);
-			game->SubmitForRender(spr_enemy_ship,  tr_enemy_ship, -0.99999);
-			game->SubmitForRender(ships, tr_spritesheet, 0.0001f);
-			game->SubmitForRender(ship, tr_shape);
-
-		
 			if(game->keyPressed(SDLK_SPACE))
 				switch (mouseEnabled) {
 				case false:
@@ -88,6 +74,19 @@ int main(int argc, char** argv) {
 					break;
 				}
 
+			for (auto t : rotators)    t->rotation += 36.0 * deltaTime; // One turn every 10 Seconds
+			for (auto t : scalers)     t->scale = sin(timePass) + 2.0f;
+			for (auto t : halfscalers) t->scale = { 1.0f, sin(timePass) + 2.0f } ;
+
+			tr_enemy_ship.position = game->mousePosition;
+
+			game->ClearScreen(darkcyan);
+
+			game->SubmitForRender(spr_player_ship, tr_player_ship);
+			game->SubmitForRender(spr_enemy_ship,  tr_enemy_ship, -0.99999);
+			game->SubmitForRender(ships, tr_spritesheet, 0.0001f);
+			game->SubmitForRender(ship, tr_shape);
+		
 			if(game->keyPressed(SDLK_a)) 
 				Debug("Pressed A");
 
