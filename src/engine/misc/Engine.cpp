@@ -51,6 +51,14 @@ namespace RG3GE {
 #pragma endregion
 
 #pragma region Renderer
+
+        void Engine::resizeWindow(int newWidth, int newHeight) {
+            if(newWidth > 0 && newHeight > 0) {
+                SDL_SetWindowSize(window, newWidth, newHeight);
+            }
+        }
+
+
 	union RenderSubject {
 		Shape2D shape;
 		Texture texture;

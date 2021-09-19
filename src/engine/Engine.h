@@ -1,6 +1,7 @@
 #pragma once
 
 #include <SDL2/SDL.h>
+#include <SDL2/SDL_video.h>
 #include <functional>
 #include <vector>
 #include <string>
@@ -217,6 +218,12 @@ namespace RG3GE {
 		void	TextureChangeCrop(Texture& t, int x, int y, int w, int h);
 
 		Texture TextureClone(Texture& src);
+
+
+        /*==============================================================================
+         * Window Functions
+         *============================================================================*/
+        void resizeWindow(int newWidth, int newHeight);
 
 		/*==============================================================================
 		 * Keyboard functions

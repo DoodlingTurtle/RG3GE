@@ -9,11 +9,11 @@
 
 #use `make clean` to remove all compiled files 
 
-TARGET:=main.exe
+TARGET:=main
 CPP:=g++
 
-LIBS:=-lglew32 -lopengl32 -lmingw32 -lSDL2main -lSDL2 
-COMMON_FLAGS:=-std=c++20 -Wno-unknown-pragmas
+LIBS:= -lGLEW -lOpenGL -lSDL2main -lSDL2 
+COMMON_FLAGS:=-std=c++2a -Wno-unknown-pragmas
 
 DEBUG_FLAGS:=-Wall -g -DDEBUG_BUILD
 RELEASE_FLAGS:=-mwindows 

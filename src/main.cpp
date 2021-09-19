@@ -14,12 +14,14 @@ int main(int argc, char** argv) {
 	Color orange    = Color( 160, 96, 32, 255 );
 	Color green     = Color(0, 255, 0, 32);
 
-
 // Setup Window
 	Engine* game = Engine::init(256, 256, "RG3GE::Engine DEMO");
 
+    
+
 	if (game) {
 		// OnStart Area
+        game->resizeWindow(1024, 1024);
 
 		// Load Textures into VRAM
 		Texture ships = game->TextureLoad("./assets/ship.png");

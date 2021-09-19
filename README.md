@@ -50,7 +50,7 @@ if (game) {
 
 ### How to compile it:
 - Make sure your compiler has access to SDL2 (`-lSDL2 -lSDL2main`) \
- ,OpenGL and GLEW (`-lglew32 -lopengl32`)
+ ,OpenGL and GLEW (for Windows `-lglew32 -lopengl32`.  For Linux `-lGLEW -lOpenGL`)
 - Put the `SDL2.dll` and `glew32.dll` into the same folder, where your compiled binary will be.
 
 - If you use linux or msys, then you can use the Makefile in this project\
