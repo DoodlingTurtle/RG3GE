@@ -105,6 +105,40 @@ namespace RG3GE {
 		int slot;
 	};
 
+    struct TransformUniforms {
+		int translation_uniform;
+		int origin_uniform;
+		int angle_uniform;
+		int scale_uniform;
+		int zlayer_uniform;
+    };
+    struct ScreenUniforms {
+		int v2screen_uniform;
+		int v2screenscale_uniform;
+		int v2screenoffset_uniform;
+    };
+    struct Common_ShaderAttributes {
+        uint32_t program;
+		int drawcolor_uniform;
+		int vertex_position_attribute;
+    };
+    struct Shape2DShader {
+        Common_ShaderAttributes common;
+        TransformUniforms transform;
+        ScreenUniforms screen;
+
+		int vertex_color_attribute;
+    };
+    struct TextureShader {
+        Common_ShaderAttributes common;
+        TransformUniforms transform;
+        ScreenUniforms screen;
+
+		int vertexUV_attribute;
+
+		int texture_uniform;
+    };
+
 	/**
 	 * Heartpiece of the the Engine.
 	 */
@@ -275,25 +309,11 @@ namespace RG3GE {
 		Vec2<float> windowScale;
 		Uint32 ticks;
 
-		void _applyTransform(Transform& tr, float zLayer);
+		void _applyTransform(const TransformUniforms&, Transform& tr, float zLayer);
 		void _applyScreenSize();
 
-		int _gl_vertex_position_attribute;
-		int _gl_vertex_color_attribute;
-		int _gl_vertexUV_attribute;
-
-		int _gl_texture_enable_uniform;
-		int _gl_texture_uniform;
-
-		int _gl_translation_uniform;
-		int _gl_origin_uniform;
-		int _gl_zlayer_uniform;
-		int _gl_angle_uniform;
-		int _gl_drawcolor_uniform;
-		int _gl_scale_uniform;
-		int _gl_v2screen_uniform;
-		int _gl_v2screenscale_uniform;
-		int _gl_v2screenoffset_uniform;
+        Shape2DShader _gl_shader_shape2d;
+        TextureShader _gl_shader_texture;
 
 		Shape2D pixel;
 		Shape2D line;
@@ -306,9 +326,6 @@ namespace RG3GE {
 		std::unordered_set<Uint8> mouse_pressed;
 		std::unordered_set<Uint8> mouse_released;
 		std::unordered_set<Uint8> mouse_held;
-
-        uint32_t _gl_shader_shape2d;
 	};
-
 
 }

@@ -14,7 +14,7 @@
  * - value = with which the global variable will be initialized
  *
  * the following global names cant be registered;
- * - game
+ * - game   ==> contains a reference to the currently running engine
  * - world
  */
 

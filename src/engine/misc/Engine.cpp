@@ -89,15 +89,23 @@ namespace RG3GE {
 	void Engine::RenderAll() {
 		std::sort(_render_jobs.begin(), _render_jobs.end(), _rendersort);
 
-		Color c = Color(0.0f, 0.0f, 0.0f, 0.0f);
+		Color cs = Color(0.0f, 0.0f, 0.0f, 0.0f);
+        Color ct = Color(0.0f, 0.0f, 0.0f, 0.0f);
 		for (auto j : _render_jobs) {
-			if (c != j.tint) {
-				c = j.tint;
-				glUniform4f(_gl_drawcolor_uniform, c.r, c.g, c.b, c.a);
-			}
 			switch (j.type) {
-			case 0: DrawShape2D(j.subject.shape, j.tr, j.zDepth); break;
-			case 1: TextureDraw(j.subject.texture, j.tr, j.zDepth); break;
+			case 0: 
+                if (cs != j.tint) {
+                    cs = j.tint;
+                    glUniform4f(_gl_shader_shape2d.common.drawcolor_uniform, cs.r, cs.g, cs.b, cs.a);
+                }
+                DrawShape2D(j.subject.shape, j.tr, j.zDepth); break;
+
+			case 1: 
+                if (ct != j.tint) {
+                    ct = j.tint;
+                    glUniform4f(_gl_shader_texture.common.drawcolor_uniform, ct.r, ct.g, ct.b, ct.a);
+                }
+                TextureDraw(j.subject.texture, j.tr, j.zDepth); break;
 			}
 		}
 
@@ -282,28 +290,40 @@ namespace RG3GE {
 
 		//Init OpenGLShaders
         #include "../shaders/shape2d.h"
-        e->_gl_shader_shape2d = Core::CreateShader(shape2d_vs, shape2d_fs);
+        e->_gl_shader_shape2d.common.program = Core::CreateShader(shape2d_vs, shape2d_fs);
+		GLCALL(e->_gl_shader_shape2d.transform.translation_uniform    = glGetUniformLocation(e->_gl_shader_shape2d.common.program, "translation"));
+		GLCALL(e->_gl_shader_shape2d.transform.origin_uniform         = glGetUniformLocation(e->_gl_shader_shape2d.common.program, "origin"));
+		GLCALL(e->_gl_shader_shape2d.transform.scale_uniform          = glGetUniformLocation(e->_gl_shader_shape2d.common.program, "scale"));
+		GLCALL(e->_gl_shader_shape2d.transform.angle_uniform          = glGetUniformLocation(e->_gl_shader_shape2d.common.program, "angle"));
+		GLCALL(e->_gl_shader_shape2d.transform.zlayer_uniform            = glGetUniformLocation(e->_gl_shader_shape2d.common.program, "zlayer"));
 
-        uint32_t program = e->_gl_shader_shape2d;
-          
+		GLCALL(e->_gl_shader_shape2d.common.drawcolor_uniform         = glGetUniformLocation(e->_gl_shader_shape2d.common.program, "drawcolor"));
+        GLCALL(e->_gl_shader_shape2d.common.vertex_position_attribute = glGetAttribLocation (e->_gl_shader_shape2d.common.program, "position"));
 
-		glUseProgram(program);
+		GLCALL(e->_gl_shader_shape2d.screen.v2screen_uniform          = glGetUniformLocation(e->_gl_shader_shape2d.common.program, "v2screen"));
+		GLCALL(e->_gl_shader_shape2d.screen.v2screenscale_uniform     = glGetUniformLocation(e->_gl_shader_shape2d.common.program, "v2screenscale"));
+		GLCALL(e->_gl_shader_shape2d.screen.v2screenoffset_uniform    = glGetUniformLocation(e->_gl_shader_shape2d.common.program, "v2screenoffset"));
 
-		GLCALL(e->_gl_texture_enable_uniform = glGetUniformLocation(program, "texture_enable"));
-		GLCALL(e->_gl_translation_uniform = glGetUniformLocation(program, "translation"));
-		GLCALL(e->_gl_origin_uniform = glGetUniformLocation(program, "origin"));
-		GLCALL(e->_gl_zlayer_uniform = glGetUniformLocation(program, "zlayer"));
-		GLCALL(e->_gl_angle_uniform = glGetUniformLocation(program, "angle"));
-		GLCALL(e->_gl_drawcolor_uniform = glGetUniformLocation(program, "drawcolor"));
-		GLCALL(e->_gl_scale_uniform = glGetUniformLocation(program, "scale"));
-		GLCALL(e->_gl_v2screen_uniform = glGetUniformLocation(program, "v2screen"));
-		GLCALL(e->_gl_v2screenscale_uniform = glGetUniformLocation(program, "v2screenscale"));
-		GLCALL(e->_gl_v2screenoffset_uniform = glGetUniformLocation(program, "v2screenoffset"));
-		GLCALL(e->_gl_texture_uniform = glGetUniformLocation(program, "mytexture"));
+        GLCALL(e->_gl_shader_shape2d.vertex_color_attribute = glGetAttribLocation(e->_gl_shader_shape2d.common.program, "vertCol"));
 
-		GLCALL(glEnableVertexAttribArray(e->_gl_vertex_position_attribute));
-		GLCALL(glEnableVertexAttribArray(e->_gl_vertex_color_attribute));
-		GLCALL(glEnableVertexAttribArray(e->_gl_vertexUV_attribute));
+
+        #include "../shaders/texture.h"
+        e->_gl_shader_texture.common.program = Core::CreateShader(texture_vs, texture_fs);
+		GLCALL(e->_gl_shader_texture.transform.translation_uniform    = glGetUniformLocation(e->_gl_shader_texture.common.program, "translation"));
+		GLCALL(e->_gl_shader_texture.transform.origin_uniform         = glGetUniformLocation(e->_gl_shader_texture.common.program, "origin"));
+		GLCALL(e->_gl_shader_texture.transform.scale_uniform          = glGetUniformLocation(e->_gl_shader_texture.common.program, "scale"));
+		GLCALL(e->_gl_shader_texture.transform.angle_uniform          = glGetUniformLocation(e->_gl_shader_texture.common.program, "angle"));
+		GLCALL(e->_gl_shader_texture.transform.zlayer_uniform            = glGetUniformLocation(e->_gl_shader_texture.common.program, "zlayer"));
+
+		GLCALL(e->_gl_shader_texture.common.drawcolor_uniform         = glGetUniformLocation(e->_gl_shader_texture.common.program, "drawcolor"));
+        GLCALL(e->_gl_shader_texture.common.vertex_position_attribute = glGetAttribLocation (e->_gl_shader_texture.common.program, "position"));
+
+		GLCALL(e->_gl_shader_texture.screen.v2screen_uniform          = glGetUniformLocation(e->_gl_shader_texture.common.program, "v2screen"));
+		GLCALL(e->_gl_shader_texture.screen.v2screenscale_uniform     = glGetUniformLocation(e->_gl_shader_texture.common.program, "v2screenscale"));
+		GLCALL(e->_gl_shader_texture.screen.v2screenoffset_uniform    = glGetUniformLocation(e->_gl_shader_texture.common.program, "v2screenoffset"));
+
+        GLCALL(e->_gl_shader_texture.vertexUV_attribute = glGetAttribLocation (e->_gl_shader_texture.common.program, "uvCoords"));
+        GLCALL(e->_gl_shader_texture.texture_uniform    = glGetUniformLocation(e->_gl_shader_texture.common.program, "mytexture"));
 
 		e->_applyScreenSize();
 
@@ -351,29 +371,12 @@ namespace RG3GE {
 		, windowOffset(0)
 		, windowScale(0)
 		, ticks(0)
-		, _gl_vertex_position_attribute(0)
-		, _gl_vertex_color_attribute(1)
-		, _gl_vertexUV_attribute(2)
-		, _gl_texture_enable_uniform(-1)
-		, _gl_texture_uniform(-1)
-		, _gl_translation_uniform(-1)
-		, _gl_origin_uniform(-1)
-		, _gl_zlayer_uniform(-1)
-		, _gl_angle_uniform(-1)
-		, _gl_drawcolor_uniform(-1)
-		, _gl_scale_uniform(-1)
-		, _gl_v2screen_uniform(-1)
-		, _gl_v2screenscale_uniform(-1)
-		, _gl_v2screenoffset_uniform(-1)
 	{}
 
 	Engine::~Engine() {
 
 		DestroyShape2D(pixel);
 
-		GLCALL(glDisableVertexAttribArray(_gl_vertexUV_attribute));
-		GLCALL(glDisableVertexAttribArray(_gl_vertex_position_attribute));
-		GLCALL(glDisableVertexAttribArray(_gl_vertex_color_attribute));
 
 		if (context) SDL_GL_DeleteContext(context);
 		if (window)	SDL_DestroyWindow(window);
@@ -511,31 +514,35 @@ namespace RG3GE {
         }
 
 	void Engine::_applyScreenSize() {
-		GLCALL(glUniform2f(_gl_v2screen_uniform, (float)windowSize.x, (float)-windowSize.y));
 
 		Vec2<float> scale = (Vec2<float>)windowSize / (Vec2<float>)origWindowSize;
-		if (scale.x > scale.y) scale.x = scale.y;
+		if (scale.x > scale.y) scale.x= scale.y;
 		else                  scale.y = scale.x;
-
 		windowScale = scale;
-		GLCALL(glUniform2f(_gl_v2screenscale_uniform, scale.x, scale.y));
-
 		Vec2<float> offset = origWindowSize * scale;
 		offset = windowSize - offset;
-
-		GLCALL(glUniform2f(_gl_v2screenoffset_uniform, offset.x, offset.y));
 		windowOffset = offset;
+
+        ScreenUniforms* uniforms[2] = { &_gl_shader_shape2d.screen, &_gl_shader_texture.screen };
+        uint32_t programs[2] = { _gl_shader_shape2d.common.program, _gl_shader_texture.common.program };
+
+        for(int a = 0; a < 2; a++) {
+            GLCALL(glUseProgram(programs[a]));
+            GLCALL(glUniform2f(uniforms[a]->v2screen_uniform, (float)windowSize.x, (float)-windowSize.y));
+            GLCALL(glUniform2f(uniforms[a]->v2screenscale_uniform, scale.x, scale.y));
+		    GLCALL(glUniform2f(uniforms[a]->v2screenoffset_uniform, offset.x, offset.y));
+        }
 
 		GLCALL(glViewport(0, 0, (int)windowSize.x, (int)windowSize.y));
 	}
 
-	void Engine::_applyTransform(Transform& transform, float zLayer) {
+	void Engine::_applyTransform(const TransformUniforms& uniforms, Transform& transform, float zLayer) {
 		Vec2<float> rot = (Vec2<float>)transform.rotation.direction;
-		GLCALL(glUniform2f(_gl_translation_uniform, transform.position.x * 2, transform.position.y * 2));
-		GLCALL(glUniform2f(_gl_origin_uniform, transform.origin.x, transform.origin.y));
-		GLCALL(glUniform1f(_gl_zlayer_uniform, zLayer));
-		GLCALL(glUniform2f(_gl_angle_uniform, rot.x, rot.y));
-		GLCALL(glUniform2f(_gl_scale_uniform, transform.scale.x * 2, transform.scale.y * 2));
+		GLCALL(glUniform2f(uniforms.translation_uniform, transform.position.x * 2, transform.position.y * 2));
+		GLCALL(glUniform2f(uniforms.origin_uniform, transform.origin.x, transform.origin.y));
+		GLCALL(glUniform1f(uniforms.zlayer_uniform, zLayer));
+		GLCALL(glUniform2f(uniforms.angle_uniform, rot.x, rot.y));
+		GLCALL(glUniform2f(uniforms.scale_uniform, transform.scale.x * 2, transform.scale.y * 2));
 	}
 #pragma endregion
 
@@ -595,22 +602,27 @@ namespace RG3GE {
 	}
 
 	void Engine::DrawShape2D(Shape2D shape, Transform& tr, float zLayer) {
-		glEnableClientState(GL_VERTEX_ARRAY);
-		glPushMatrix();
 
-		_applyTransform(tr, zLayer);
+        GLCALL(glUseProgram(_gl_shader_shape2d.common.program));
 
-		glBindBuffer(GL_ARRAY_BUFFER, shape.vertexBuffer);
-		glVertexPointer(2, GL_FLOAT, 0, NULL);
+		GLCALL(glEnableVertexAttribArray(_gl_shader_shape2d.common.vertex_position_attribute));
+		GLCALL(glEnableVertexAttribArray(_gl_shader_shape2d.vertex_color_attribute));
+		GLCALL(glEnableClientState(GL_VERTEX_ARRAY));
+		GLCALL(glPushMatrix());
 
-		GLCALL(glVertexAttribPointer(_gl_vertex_position_attribute, 2, GL_FLOAT, GL_TRUE, sizeof(Vertex2D), 0));
-		GLCALL(glVertexAttribPointer(_gl_vertex_color_attribute, 4, GL_FLOAT, GL_TRUE, sizeof(Vertex2D), (void*)(2 * sizeof(GL_FLOAT))));
-		GLCALL(glVertexAttribPointer(_gl_vertexUV_attribute, 2, GL_FLOAT, GL_TRUE, sizeof(Vertex2D), (void*)(6 * sizeof(GL_FLOAT))));
+		_applyTransform(_gl_shader_shape2d.transform, tr, zLayer);
 
-		glDrawArrays(static_cast<GLint>(shape.shape), 0, shape.vertexCnt);
+		GLCALL(glBindBuffer(GL_ARRAY_BUFFER, shape.vertexBuffer));
+		GLCALL(glVertexPointer(2, GL_FLOAT, 0, NULL));
+		GLCALL(glVertexAttribPointer(_gl_shader_shape2d.common.vertex_position_attribute, 2, GL_FLOAT, GL_TRUE, sizeof(Vertex2D), 0));
+		GLCALL(glVertexAttribPointer(_gl_shader_shape2d.vertex_color_attribute,           4, GL_FLOAT, GL_TRUE, sizeof(Vertex2D), (void*)(2 * sizeof(GL_FLOAT))));
 
-		glPopMatrix();
-		glDisableClientState(GL_VERTEX_ARRAY);
+		GLCALL(glDrawArrays(static_cast<GLint>(shape.shape), 0, shape.vertexCnt));
+
+		GLCALL(glPopMatrix());
+		GLCALL(glDisableClientState(GL_VERTEX_ARRAY));
+		GLCALL(glDisableVertexAttribArray(_gl_shader_shape2d.common.vertex_position_attribute));
+		GLCALL(glDisableVertexAttribArray(_gl_shader_shape2d.vertex_color_attribute));
 	}
 #pragma endregion
 
@@ -764,14 +776,32 @@ namespace RG3GE {
 			return;
 		}
 
-		GLCALL(glUniform1f(_gl_texture_enable_uniform, 1.0f));
+        GLCALL(glUseProgram(_gl_shader_texture.common.program));
+
+		GLCALL(glEnableVertexAttribArray(_gl_shader_texture.common.vertex_position_attribute));
+		GLCALL(glEnableVertexAttribArray(_gl_shader_texture.vertexUV_attribute));
+		glEnableClientState(GL_VERTEX_ARRAY);
+
+		glPushMatrix();
+
+		_applyTransform(_gl_shader_texture.transform, tr, zLayer);
+
+		glBindBuffer(GL_ARRAY_BUFFER, t.texture_plane.vertexBuffer);
+		glVertexPointer(2, GL_FLOAT, 0, NULL);
+		GLCALL(glVertexAttribPointer(_gl_shader_texture.common.vertex_position_attribute, 2, GL_FLOAT, GL_TRUE, sizeof(Vertex2D), 0));
+		GLCALL(glVertexAttribPointer(_gl_shader_texture.vertexUV_attribute,               2, GL_FLOAT, GL_TRUE, sizeof(Vertex2D), (void*)(6 * sizeof(GL_FLOAT))));
 
 		GLCALL(glActiveTexture(GL_TEXTURE0));
 		GLCALL(glBindTexture(GL_TEXTURE_2D, _texture_slots[t.slot]._gl_texture_id));
-		GLCALL(glUniform1i(_gl_texture_uniform, 0));
+		GLCALL(glUniform1i(_gl_shader_texture.texture_uniform, 0));
 
-		DrawShape2D(t.texture_plane, tr, zLayer);
-		GLCALL(glUniform1f(_gl_texture_enable_uniform, 0.0f));
+		glDrawArrays(static_cast<GLint>(t.texture_plane.shape), 0, t.texture_plane.vertexCnt);
+
+		glPopMatrix();
+
+		glDisableClientState(GL_VERTEX_ARRAY);
+		GLCALL(glDisableVertexAttribArray(_gl_shader_shape2d.common.vertex_position_attribute));
+		GLCALL(glDisableVertexAttribArray(_gl_shader_texture.vertexUV_attribute));
 	}
 
 	Texture Engine::TextureClone(Texture& src) {
