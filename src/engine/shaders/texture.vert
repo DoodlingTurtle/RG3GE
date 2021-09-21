@@ -13,17 +13,23 @@ uniform float zlayer;
 uniform vec2 angle;
 uniform vec2 scale;
 
+uniform vec2 cropSize;
+uniform vec2 uvOffset;
+
 out vec4 vertcolor;
 out vec2 uvs;
 
 void main() {
 
-   uvs       = uvCoords;
+   uvs       = (uvCoords * cropSize) + uvOffset;
 
-   vec2 finalOrig = position - origin;
+   vec2 finalOrig =  (position * cropSize) - origin;
         finalOrig *= (scale*v2screenscale);
 
-   vec2 finalPos = vec2( finalOrig.x * angle.x + finalOrig.y * (-angle.y), finalOrig.x * angle.y + finalOrig.y *  angle.x);
+   vec2 finalPos = vec2( 
+             finalOrig.x * angle.x + finalOrig.y * (-angle.y), 
+             finalOrig.x * angle.y + finalOrig.y *  angle.x
+        );
         finalPos += (translation*v2screenscale) + v2screenoffset;
 
    gl_Position = vec4(finalPos / v2screen - vec2(1, -1) ,zlayer , 1);

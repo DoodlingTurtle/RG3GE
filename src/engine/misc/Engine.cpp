@@ -22,10 +22,11 @@ namespace RG3GE {
 	struct TextureSlot {
 		int width = 0, height = 0, colorchannels = 0;
 		unsigned int _gl_texture_id = -1;
+        Shape2D texture_plane;
 		unsigned int users = 0;
 	};
 	static TextureSlot  _texture_slots[ENGINE_TEXTURE_LIMIT];
-	static void freeTextureSlot(unsigned int slot, bool ignoreUsers = false) {
+	void Engine::freeTextureSlot(unsigned int slot, bool ignoreUsers) {
 		if (_texture_slots[slot].users > 0) _texture_slots[slot].users--;
 
 		if (ignoreUsers || _texture_slots[slot].users == 0) {
@@ -33,6 +34,7 @@ namespace RG3GE {
 			_texture_slots[slot].width = 0;
 			_texture_slots[slot].height = 0;
 			_texture_slots[slot].colorchannels = 0;
+            DestroyShape2D(_texture_slots[slot].texture_plane); 
 		}
 	}
 	static int nextFreeTextureSlot() {
@@ -324,6 +326,9 @@ namespace RG3GE {
 
         GLCALL(e->_gl_shader_texture.vertexUV_attribute = glGetAttribLocation (e->_gl_shader_texture.common.program, "uvCoords"));
         GLCALL(e->_gl_shader_texture.texture_uniform    = glGetUniformLocation(e->_gl_shader_texture.common.program, "mytexture"));
+        GLCALL(e->_gl_shader_texture.uv_offset_uniform = glGetUniformLocation(e->_gl_shader_texture.common.program, "uvOffset"));
+        GLCALL(e->_gl_shader_texture.crop_size_uniform = glGetUniformLocation(e->_gl_shader_texture.common.program, "cropSize"));
+        
 
 		e->_applyScreenSize();
 
@@ -349,15 +354,15 @@ namespace RG3GE {
 	void Engine::cleanup() {
 
 		// Free all texture Slots
-		for (int a = 0; a < ENGINE_TEXTURE_LIMIT; a++) {
-			if (_texture_slots[a].colorchannels > 0) {
-				freeTextureSlot(a, true);
-			}
-		}
+        if(_instance) {
+            for (int a = 0; a < ENGINE_TEXTURE_LIMIT; a++) {
+                if (_texture_slots[a].colorchannels > 0) {
+                    _instance->freeTextureSlot(a, true);
+                }
+            }
 
-		//TODO: Destroy all left Shape2Ds
-		if (_instance)
 			delete _instance;
+        }
 
 		SDL_Quit();
 	}
@@ -648,6 +653,7 @@ namespace RG3GE {
 
 	}
 
+
 	void Engine::DrawLine( int startx, int starty, int endx, int endy, Color c, int thickness, float zLayer) {
 		Color t = currentTint;
 		currentTint = c;
@@ -730,16 +736,19 @@ namespace RG3GE {
 		GLCALL(glGenerateMipmap(GL_TEXTURE_2D));
 
 		stbi_image_free(databuffer);
+        slot->texture_plane = CreateShape2D(RG3GE::PolyShapes::QUADS, {
+            {              0.0f,                0.0f, 0.0f, 0.0f},
+            {(float)slot->width,                1.0f, 1.0f, 0.0f},
+            {(float)slot->width, (float)slot->height, 1.0f, 1.0f},
+            {              0.0f, (float)slot->height, 0.0f, 1.0f}
+        });
 		slot->users++;
 
-		ret.crop[0] = { 0,                   0, 0, 0 };
-		ret.crop[1] = { (float)slot->width,                   0, 1, 0 };
-		ret.crop[2] = { (float)slot->width, (float)slot->height, 1, 1 };
-		ret.crop[3] = { 0, (float)slot->height, 0, 1 };
-
+        ret.cropSize.x = 1.0f;
+        ret.cropSize.y = 1.0f;
+        ret.uvOffset.x = 0;
+        ret.uvOffset.y = 0;
 		ret.slot = iSlot;
-
-		ret.texture_plane = CreateShape2D(RG3GE::PolyShapes::QUADS, 4, ret.crop);
 
 		return ret;
 	}
@@ -756,18 +765,10 @@ namespace RG3GE {
 			return;
 		}
 
-		float cw = (float)w / slot->width;
-		float ch = (float)h / slot->height;
-		float cx = (float)x / slot->width;
-		float cy = (float)y / slot->height;
-
-		t.crop[0] = { 0,        0, cx    , cy };
-		t.crop[1] = { (float)w,        0, cx + cw, cy };
-		t.crop[2] = { (float)w, (float)h, cx + cw, cy + ch };
-		t.crop[3] = { 0, (float)h, cx    , cy + ch };
-
-		GLCALL(glBindBuffer(GL_ARRAY_BUFFER, t.texture_plane.vertexBuffer));
-		GLCALL(glBufferData(GL_ARRAY_BUFFER, 4 * sizeof(Vertex2D), t.crop, GL_DYNAMIC_DRAW));
+        t.cropSize.x = (float)w / slot->width;
+        t.cropSize.y = (float)h / slot->height; 
+        t.uvOffset.x = (float)x;
+        t.uvOffset.y = (float)y;
 	}
 
 	void Engine::TextureDraw(Texture& t, Transform& tr, float zLayer) {
@@ -780,14 +781,14 @@ namespace RG3GE {
 
 		GLCALL(glEnableVertexAttribArray(_gl_shader_texture.common.vertex_position_attribute));
 		GLCALL(glEnableVertexAttribArray(_gl_shader_texture.vertexUV_attribute));
-		glEnableClientState(GL_VERTEX_ARRAY);
+		GLCALL(glEnableClientState(GL_VERTEX_ARRAY));
 
-		glPushMatrix();
+		GLCALL(glPushMatrix());
 
 		_applyTransform(_gl_shader_texture.transform, tr, zLayer);
 
-		glBindBuffer(GL_ARRAY_BUFFER, t.texture_plane.vertexBuffer);
-		glVertexPointer(2, GL_FLOAT, 0, NULL);
+		GLCALL(glBindBuffer(GL_ARRAY_BUFFER, _texture_slots[t.slot].texture_plane.vertexBuffer));
+		GLCALL(glVertexPointer(2, GL_FLOAT, 0, NULL));
 		GLCALL(glVertexAttribPointer(_gl_shader_texture.common.vertex_position_attribute, 2, GL_FLOAT, GL_TRUE, sizeof(Vertex2D), 0));
 		GLCALL(glVertexAttribPointer(_gl_shader_texture.vertexUV_attribute,               2, GL_FLOAT, GL_TRUE, sizeof(Vertex2D), (void*)(6 * sizeof(GL_FLOAT))));
 
@@ -795,11 +796,14 @@ namespace RG3GE {
 		GLCALL(glBindTexture(GL_TEXTURE_2D, _texture_slots[t.slot]._gl_texture_id));
 		GLCALL(glUniform1i(_gl_shader_texture.texture_uniform, 0));
 
-		glDrawArrays(static_cast<GLint>(t.texture_plane.shape), 0, t.texture_plane.vertexCnt);
+        GLCALL(glUniform2f(_gl_shader_texture.uv_offset_uniform, t.uvOffset.x, t.uvOffset.y));
+        GLCALL(glUniform2f(_gl_shader_texture.crop_size_uniform, t.cropSize.x, t.cropSize.y));
 
-		glPopMatrix();
+		GLCALL(glDrawArrays(static_cast<GLint>(_texture_slots[t.slot].texture_plane.shape), 0, _texture_slots[t.slot].texture_plane.vertexCnt));
 
-		glDisableClientState(GL_VERTEX_ARRAY);
+		GLCALL(glPopMatrix());
+
+		GLCALL(glDisableClientState(GL_VERTEX_ARRAY));
 		GLCALL(glDisableVertexAttribArray(_gl_shader_shape2d.common.vertex_position_attribute));
 		GLCALL(glDisableVertexAttribArray(_gl_shader_texture.vertexUV_attribute));
 	}
@@ -808,18 +812,13 @@ namespace RG3GE {
 		Texture ret;
 
 		ret.slot = src.slot;
-		ret.crop[0] = src.crop[0];
-		ret.crop[1] = src.crop[1];
-		ret.crop[2] = src.crop[2];
-		ret.crop[3] = src.crop[3];
-
-		ret.texture_plane = CreateShape2D(RG3GE::PolyShapes::QUADS, 4, ret.crop);
+        ret.cropSize = src.cropSize;
+        ret.uvOffset = src.uvOffset;
 
 		return ret;
 	}
 
 	void Engine::TextureDestroy(Texture& t) {
-		DestroyShape2D(t.texture_plane);
 		if (t.slot != -1) freeTextureSlot(t.slot);
 	}
 #pragma endregion

@@ -100,8 +100,8 @@ namespace RG3GE {
 	};
 
 	struct Texture {
-		Shape2D texture_plane;
-		Vertex2D crop[4];
+		Vec2<float> cropSize;
+        Vec2<float> uvOffset;
 		int slot;
 	};
 
@@ -135,6 +135,8 @@ namespace RG3GE {
         ScreenUniforms screen;
 
 		int vertexUV_attribute;
+        int uv_offset_uniform;
+        int crop_size_uniform;
 
 		int texture_uniform;
     };
@@ -288,7 +290,7 @@ namespace RG3GE {
 		void	TextureDraw(Texture& t, Transform&, float zLayer = 0);
 
 
-
+        void freeTextureSlot(unsigned int slot, bool ignoreUsers = false);
 
 		Engine();
 
