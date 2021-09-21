@@ -25,6 +25,8 @@ debug:FLAGS:=$(COMMON_FLAGS) $(DEBUG_FLAGS)
 debug: $(OBJFILES)
 	$(CPP) $^ $(FLAGS) $(LIBS) -o $@.$(TARGET) 
 
+gdb: debug
+	gdb ./$^.$(TARGET)
 
 run: debug
 	./$^.$(TARGET)

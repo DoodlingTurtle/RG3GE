@@ -1,6 +1,7 @@
 #include "./engine/Engine.h"
 #include "./engine/Transform.h"
 #include "./engine/Macros.h"
+#include "./engine/Global.h"
 
 using namespace RG3GE;
 
@@ -16,8 +17,6 @@ int main(int argc, char** argv) {
 
 // Setup Window
 	Engine* game = Engine::init(256, 256, "RG3GE::Engine DEMO");
-
-    
 
 	if (game) {
 		// OnStart Area
@@ -37,16 +36,16 @@ int main(int argc, char** argv) {
 		Transform tr_enemy_ship = { {256-28}, {16}, {1.0f}, -45.0f };
 
 		// Create Polygon Object
-		Shape2D ship = game->CreateShape2D(PolyShapes::TRIANGLE_STRIP, {
+		Shape2D cursor = game->CreateShape2D(PolyShapes::TRIANGLE_STRIP, {
 			{  0, 32, darkred},
-			{ 16, 24, red },
 			{ 16,  0, red },
+			{ 16, 24, red },
 			{ 32, 32, darkred}
 		});
-		Transform tr_shape = { { 256 - 64, 64 }, { 16 }, { 2.0f } , -135.0f };
+		Transform tr_cursor = { { 0 }, { 16, 0 }, { 0.4f, 0.6 } , -45.0f };
 
-		std::vector<Transform*> rotators = { &tr_player_ship, &tr_enemy_ship, &tr_shape };
-		std::vector<Transform*> scalers = { &tr_shape, &tr_enemy_ship };
+		std::vector<Transform*> rotators    = { &tr_player_ship, &tr_enemy_ship};
+		std::vector<Transform*> scalers     = { &tr_enemy_ship };
 		std::vector<Transform*> halfscalers = { &tr_spritesheet, &tr_player_ship };
 
 		// This is your Main-Loop (game->tick will advance the game by exactly one cycle)
@@ -64,30 +63,34 @@ int main(int argc, char** argv) {
 
 			if(game->keyPressed(SDLK_SPACE))
 				switch (mouseEnabled) {
+
 				case false:
 					SDL_ShowCursor(SDL_ENABLE);
 					Debug("Enable Mouse");
 					mouseEnabled = true;
 					break;
+
 				case true:
 					SDL_ShowCursor(SDL_DISABLE);
 					Debug("Disable Mouse");
 					mouseEnabled = false;
 					break;
+
 				}
 
 			for (auto t : rotators)    t->rotation += 36.0 * deltaTime; // One turn every 10 Seconds
 			for (auto t : scalers)     t->scale = sin(timePass) + 2.0f;
 			for (auto t : halfscalers) t->scale = { 1.0f, sin(timePass) + 2.0f } ;
 
-			tr_enemy_ship.position = game->mousePosition;
+			tr_cursor.position = game->mousePosition;
+			game->SubmitForRender(cursor, tr_cursor, -0.99999);
 
 			game->ClearScreen(darkcyan);
 
 			game->SubmitForRender(spr_player_ship, tr_player_ship);
-			game->SubmitForRender(spr_enemy_ship,  tr_enemy_ship, -0.99999);
+			game->SubmitForRender(spr_enemy_ship,  tr_enemy_ship);
 			game->SubmitForRender(ships, tr_spritesheet, 0.0001f);
-			game->SubmitForRender(ship, tr_shape);
+
 		
 			if(game->keyPressed(SDLK_a)) 
 				Debug("Pressed A");
@@ -108,7 +111,7 @@ int main(int argc, char** argv) {
 		game->TextureDestroy(spr_enemy_ship);
 		game->TextureDestroy(spr_player_ship);
 		game->TextureDestroy(ships);
-		game->DestroyShape2D(ship);
+		game->DestroyShape2D(cursor);
 	}
 
 	Engine::cleanup();

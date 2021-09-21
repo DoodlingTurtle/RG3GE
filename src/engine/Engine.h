@@ -1,5 +1,6 @@
 #pragma once
 
+#include <GL/glew.h>
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_video.h>
 #include <functional>
@@ -8,7 +9,6 @@
 #include <iostream>
 #include <unordered_set>
 #include <unordered_map>
-#include <GL/glew.h>
 #include <SDL2/SDL_opengl.h>
 
 namespace RG3GE {
@@ -307,6 +307,7 @@ namespace RG3GE {
 		std::unordered_set<Uint8> mouse_released;
 		std::unordered_set<Uint8> mouse_held;
 
+        uint32_t _gl_shader_shape2d;
 	};
 
 

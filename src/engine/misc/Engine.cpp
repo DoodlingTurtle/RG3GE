@@ -1,3 +1,5 @@
+#include <GL/glew.h>
+
 #include "../Engine.h"
 #include "../../engine_config.h"
 #include "../Macros.h"
@@ -7,23 +9,14 @@
 #include <algorithm>
 
 #include "../vendor/stb_image.h"
-
-#ifdef DEBUG_BUILD
-void CheckOGLErr(const char* stmt, const char* fname, int line) {
-	GLenum err = glGetError();
-	if (err != GL_NO_ERROR) {
-		std::cout << "OpenGL error " << err << " at " << fname << ":" << line << " => " << stmt << std::endl;
-	}
-}
-#define GLCALL(stmt) do {\
-  stmt; \
-  CheckOGLErr(#stmt, __FILE__, __LINE__); \
-} while(0)
-#else
-#define GLCALL(s) s
-#endif
+#include "./Shader.h"
 
 namespace RG3GE {
+
+//=============================================================================
+// TextureSlots
+//-----------------------------------------------------------------------------
+//=============================================================================
 #pragma region TextureSlots
 	struct TextureSlot {
 		int width = 0, height = 0, colorchannels = 0;
@@ -50,22 +43,19 @@ namespace RG3GE {
 	}
 #pragma endregion
 
+
+
+//=============================================================================
+// Renderer
+//-----------------------------------------------------------------------------
+//=============================================================================
 #pragma region Renderer
-
-        void Engine::resizeWindow(int newWidth, int newHeight) {
-            if(newWidth > 0 && newHeight > 0) {
-                SDL_SetWindowSize(window, newWidth, newHeight);
-            }
-        }
-
-
 	union RenderSubject {
 		Shape2D shape;
 		Texture texture;
 
 		RenderSubject() {};
 	};
-
 	struct RenderJob {
 		Transform tr;
 		unsigned char type;
@@ -87,7 +77,6 @@ namespace RG3GE {
 		}
 	};
 	static std::vector<RenderJob> _render_jobs;
-
 	void Engine::SubmitForRender(Shape2D& shape, Transform& tr, float zDepth) {
 		_render_jobs.push_back({ tr, 0, zDepth, shape, currentTint });
 	}
@@ -116,6 +105,12 @@ namespace RG3GE {
 	}
 #pragma endregion
 
+
+
+//=============================================================================
+// RG3GE::Vec2
+//-----------------------------------------------------------------------------
+//=============================================================================
 #pragma region RG3GE::Vec2
 	std::ostream& operator << (std::ostream& os, const Vec2<int>& v) { os << " Vec2<int>(" << v.x << ", " << v.y << ")"; return os; }
 	std::ostream& operator << (std::ostream& os, const Vec2<float>& v) { os << " Vec2<float>(" << v.x << ", " << v.y << ")"; return os; }
@@ -123,6 +118,12 @@ namespace RG3GE {
 	std::ostream& operator << (std::ostream& os, const Vec2<short>& v) { os << " Vec2<short>(" << v.x << ", " << v.y << ")"; return os; }
 #pragma endregion
 
+
+
+//==============================================================================
+// RG3GE::Angle
+//------------------------------------------------------------------------------
+//==============================================================================
 #pragma region RG3GE::Angle
 	Angle::Angle(double ang) {
 		angle = ang * PI2 / 360.0;
@@ -148,10 +149,13 @@ namespace RG3GE {
 	}
 #pragma endregion
 
+
+
+//=============================================================================
+// RG3GE::Color
+//-----------------------------------------------------------------------------
+//=============================================================================
 #pragma region RG3GE::Color
-	/*==============================================================================
-	 * RG3GE::Color
-	 *============================================================================*/
 	Color::Color(int r, int g, int b, int a)
 		: r(r / 255.0f), g(g / 255.0f), b(b / 255.0f), a(a / 255.0f)
 	{}
@@ -161,6 +165,12 @@ namespace RG3GE {
 	bool Color::operator != (Color& c) { return (c.r != r) || (c.g != g) || (c.b != b) || (c.a != a); }
 #pragma endregion
 
+
+
+//=============================================================================
+// RG3GE::Vertex2D
+//-----------------------------------------------------------------------------
+//=============================================================================
 #pragma region RG3GE::Vertex2D
 	Vertex2D::Vertex2D()
 		: position(0, 0)
@@ -186,6 +196,12 @@ namespace RG3GE {
 	{}
 #pragma endregion
 
+
+
+//=============================================================================
+// RG3GE::Shape2D
+//-----------------------------------------------------------------------------
+//=============================================================================
 #pragma region RG3GE::Shape2D
 	Shape2D::Shape2D()
 		: shape(PolyShapes::POINTS)
@@ -193,31 +209,13 @@ namespace RG3GE {
 	{}
 #pragma endregion
 
+
+
+//=============================================================================
+// RG3GE::Engine
+//-----------------------------------------------------------------------------
+//=============================================================================
 #pragma region RG3GE::Engine
-	static unsigned int CompileShader(unsigned int type, std::string& src) {
-		unsigned int shader = glCreateShader(type);
-		const char* sr = src.c_str();
-		int l = (int)src.length();
-		glShaderSource(shader, 1, &sr, &l);
-		glCompileShader(shader);
-
-		int state;
-		glGetShaderiv(shader, GL_COMPILE_STATUS, &state);
-
-		if (state != 1) {
-			std::cout << "Could not comile shader type " << src << std::endl;
-#ifdef DEBUG_BUILD
-			int log_size = 0;
-			glGetShaderiv(shader, GL_INFO_LOG_LENGTH, &log_size);
-			char* buffer = (char*)alloca(log_size);
-			glGetShaderInfoLog(shader, log_size, &log_size, buffer);
-			Debug(buffer);
-#endif 
-		}
-
-		return shader;
-
-	}
 
 	const Color Engine::WHITE = Color(1.0f, 1.0f, 1.0f, 1.0f);
 	const Color Engine::BLACK = Color(0.0f, 0.0f, 0.0f, 1.0f);
@@ -281,88 +279,12 @@ namespace RG3GE {
 
 		_render_jobs.reserve(ENGINE_DRAW_CALL_LIMIT);
 
-		//Init OpenGLShader
-		std::string vs =
-			"#version 330 core\n"
-			"\n"
-			"layout(location = 0) in vec2 position;\n"
-			"layout(location = 1) in vec4 vertCol;\n"
-			"layout(location = 2) in vec2 uvCoords;\n"
-			"\n"
-			"uniform vec2 translation;\n"
-			"uniform vec2 origin;\n"
-			"uniform float zlayer;\n"
-			"uniform vec2 angle;\n"
-			"uniform vec2 scale;\n"
-			"\n"
-			"uniform vec2 v2screen;\n"
-			"uniform vec2 v2screenscale;\n"
-			"uniform vec2 v2screenoffset;\n"
-			"\n"
-			"out vec4 vertcolor;\n"
-			"out vec2 uvs;\n"
-			"\n"
-			"void main() {\n"
-			"   vertcolor = vertCol;\n"
-			"   uvs       = uvCoords;\n"
-			"\n"
-			"   vec2 finalOrig = position - origin;\n"
-			"        finalOrig *= (scale*v2screenscale);\n"
-			"\n"
-			"   vec2 finalPos = vec2("
-			"                     finalOrig.x * angle.x + finalOrig.y * (-angle.y),"
-			"                     finalOrig.x * angle.y + finalOrig.y *  angle.x"
-			"                   );\n"
-			"        finalPos += (translation*v2screenscale) + v2screenoffset;\n"
-			"\n"
-			"   gl_Position = vec4(finalPos / v2screen"
-			"                - vec2(1, -1)"
-			"   ,zlayer , 1);\n"
-			"}\n";
+		//Init OpenGLShaders
+        #include "../shaders/shape2d.h"
+        e->_gl_shader_shape2d = Core::CreateShader(shape2d_vs, shape2d_fs);
 
-		std::string fs =
-			"#version 330 core\n"
-			"\n"
-			"out vec4 color;\n"
-			"\n"
-			"uniform vec4 drawcolor;\n"
-			"uniform sampler2D mytexture;\n"
-			"uniform float texture_enable;\n"
-			"\n"
-			"in vec4 vertcolor;\n"
-			"in vec2 uvs;\n"
-			"\n"
-			"void main() {\n"
-			"	color = "
-			"      ((texture_enable * texture(mytexture, uvs)) "
-			"       + ((1.0 - texture_enable) * vec4(1.0, 1.0, 1.0, 1.0)))"
-			"      * drawcolor * vertcolor;\n"
-			"}\n";
-
-		unsigned int iVS = CompileShader(GL_VERTEX_SHADER, vs);
-		unsigned int iFS = CompileShader(GL_FRAGMENT_SHADER, fs);
-		unsigned int program = glCreateProgram();
-
-		glAttachShader(program, iVS);
-		glAttachShader(program, iFS);
-		glLinkProgram(program);
-
-		int link_state;
-		glGetProgramiv(program, GL_LINK_STATUS, &link_state);
-		glDeleteShader(iVS);
-		glDeleteShader(iFS);
-
-		if (link_state != 1) {
-			std::cout << "Could not link program type " << std::endl;
-#ifdef DEBUG_BUILD
-			int log_size = 0;
-			glGetProgramiv(program, GL_INFO_LOG_LENGTH, &log_size);
-			char* buffer = (char*)alloca(log_size);
-			glGetProgramInfoLog(program, log_size, &log_size, buffer);
-			std::cout << buffer << std::endl;
-#endif 
-			return nullptr;
-		}
+        uint32_t program = e->_gl_shader_shape2d;
+          
 
 		glUseProgram(program);
 
@@ -581,6 +503,12 @@ namespace RG3GE {
 		glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
 	}
 
+        void Engine::resizeWindow(int newWidth, int newHeight) {
+            if(newWidth > 0 && newHeight > 0) {
+                SDL_SetWindowSize(window, newWidth, newHeight);
+            }
+        }
+
 	void Engine::_applyScreenSize() {
 		GLCALL(glUniform2f(_gl_v2screen_uniform, (float)windowSize.x, (float)-windowSize.y));
 
@@ -610,6 +538,12 @@ namespace RG3GE {
 	}
 #pragma endregion
 
+
+
+//=============================================================================
+// RG3GE::Engine::Input - Functions
+//-----------------------------------------------------------------------------
+//=============================================================================
 #pragma region RG3GE::Engine::Input - Functions
 
 	bool Engine::keyPressed(SDL_Keycode code) { return keys_pressed.find(code) != keys_pressed.end(); }
@@ -622,6 +556,12 @@ namespace RG3GE {
 
 #pragma endregion
 
+
+
+//=============================================================================
+// RG3GE::Engine::Shape2D - Functions
+//-----------------------------------------------------------------------------
+//=============================================================================
 #pragma region RG3GE::Engine::Shape2D - Functions
 	Shape2D Engine::CreateShape2D(RG3GE::PolyShapes shape, const std::vector<Vertex2D>& data) {
 		Vertex2D* points = (Vertex2D*)alloca(sizeof(Vertex2D) * data.size());
@@ -673,6 +613,12 @@ namespace RG3GE {
 	}
 #pragma endregion
 
+
+
+//=============================================================================
+// RG3GE::Engine::Draw... - Functions
+//-----------------------------------------------------------------------------
+//=============================================================================
 #pragma region RG3GE::Engine::Draw... - Functions
 	void Engine::DrawRectFilled(int x, int y, int w, int h, Color c, float zLayer) {
 		Color t = currentTint;
@@ -689,7 +635,7 @@ namespace RG3GE {
 
 	}
 
-	void Engine::DrawLine(int startx, int starty, int endx, int endy, Color c, int thickness, float zLayer) {
+	void Engine::DrawLine( int startx, int starty, int endx, int endy, Color c, int thickness, float zLayer) {
 		Color t = currentTint;
 		currentTint = c;
 
@@ -732,6 +678,12 @@ namespace RG3GE {
 	}
 #pragma endregion
 
+
+
+//=============================================================================
+// RG3GE::Engine::Texture - Functions
+//-----------------------------------------------------------------------------
+//=============================================================================
 #pragma region RG3GE::Engine::Texture - Functions
 	Texture Engine::TextureLoad(const char* filename) {
 
@@ -840,4 +792,8 @@ namespace RG3GE {
 		if (t.slot != -1) freeTextureSlot(t.slot);
 	}
 #pragma endregion
+
+
 }
+
+
