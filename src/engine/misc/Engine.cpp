@@ -1,6 +1,7 @@
 #include <GL/glew.h>
 
 #include "../Engine.h"
+#include "../Global.h"
 #include "../../engine_config.h"
 #include "../Macros.h"
 
@@ -793,6 +794,23 @@ namespace RG3GE {
 	}
 #pragma endregion
 
+
+//=============================================================================
+// Global-Setup
+//-----------------------------------------------------------------------------
+//=============================================================================
+#pragma region Global-Setup
+namespace Global {
+
+#define __GLOBALS_HEADERS__
+#include "../../engine_globals.hpp"
+#undef __GLOBALS_HEADERS__
+
+#define REGISTER_GLOBAL(t, n, v) t n = v;
+#include "../../engine_globals.hpp"
+#include "./global.hpp"
+}
+#pragma endregion
 
 }
 
