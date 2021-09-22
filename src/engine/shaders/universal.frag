@@ -23,7 +23,7 @@ in vec2 uvs;
 void main() {
     switch(u_shader_mode) {
         case 0: /* Shape2D */
-	        gl_FragColor = vertcolor * u_drawcolor;
+	        gl_FragColor = vertcolor;
             break;
 
         case 1: /* Texture */

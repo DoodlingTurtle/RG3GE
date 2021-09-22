@@ -97,7 +97,7 @@ std::string universal_fs =
 "void main() {\n"
 "    switch(u_shader_mode) {\n"
 "        case 0: /* Shape2D */\n"
-"	        gl_FragColor = vertcolor * u_drawcolor;\n"
+"	        gl_FragColor = vertcolor;\n"
 "            break;\n"
 "\n"
 "        case 1: /* Texture */\n"
