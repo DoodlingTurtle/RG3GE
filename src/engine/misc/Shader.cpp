@@ -32,14 +32,13 @@ namespace RG3GE::Core {
 
 		if (state != 1) {
 			std::cout << "Could not comile shader type " << src << std::endl;
-#ifdef DEBUG_BUILD
+
 			int log_size = 0;
 			glGetShaderiv(shader, GL_INFO_LOG_LENGTH, &log_size);
 			char* buffer = (char*)alloca(log_size);
 			glGetShaderInfoLog(shader, log_size, &log_size, buffer);
-			Debug(buffer);
-#endif 
-            throw -2;
+                std::cout << buffer << std::endl;
+            throw buffer;
 		}
 
 		return shader;
@@ -48,32 +47,39 @@ namespace RG3GE::Core {
 
     uint32_t CreateShader(const std::string& vs, const std::string& fs) {
 
-		uint32_t iVS = CompileShader(GL_VERTEX_SHADER, vs);
-		uint32_t iFS = CompileShader(GL_FRAGMENT_SHADER, fs);
-		uint32_t program = glCreateProgram();
+        try { 
+            uint32_t iVS = CompileShader(GL_VERTEX_SHADER, vs); 
+            uint32_t iFS = CompileShader(GL_FRAGMENT_SHADER, fs); 
 
-		glAttachShader(program, iVS);
-		glAttachShader(program, iFS);
-		glLinkProgram(program);
+            uint32_t program = glCreateProgram();
 
-		int link_state;
-		glGetProgramiv(program, GL_LINK_STATUS, &link_state);
+            glAttachShader(program, iVS);
+            glAttachShader(program, iFS);
+            glLinkProgram(program);
 
-		glDeleteShader(iVS);
-		glDeleteShader(iFS);
+            int link_state;
+            glGetProgramiv(program, GL_LINK_STATUS, &link_state);
 
-		if (link_state != 1) {
-			std::cout << "Could not link program type " << std::endl;
-#ifdef DEBUG_BUILD
-			int log_size = 0;
-			glGetProgramiv(program, GL_INFO_LOG_LENGTH, &log_size);
-			char* buffer = (char*)alloca(log_size);
-			glGetProgramInfoLog(program, log_size, &log_size, buffer);
-			std::cout << buffer << std::endl;
-#endif 
-		    throw -1;	
-		}
+            glDeleteShader(iVS);
+            glDeleteShader(iFS);
 
-        return program;
+            if (link_state != 1) {
+                std::cout << "Could not link program type " << std::endl;
+
+                int log_size = 0;
+                glGetProgramiv(program, GL_INFO_LOG_LENGTH, &log_size);
+                char* buffer = (char*)alloca(log_size);
+                glGetProgramInfoLog(program, log_size, &log_size, buffer);
+                std::cout << buffer << std::endl;
+
+                throw buffer;	
+            }
+
+            return program;
+        }
+        catch(const char* s) { std::cout << "failed to compile shader: " << s << std::endl; }
+
+        return 0;
+
     }
 }

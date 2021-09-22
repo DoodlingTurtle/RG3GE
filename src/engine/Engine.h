@@ -66,7 +66,6 @@ namespace RG3GE {
 		Vec2<T>(T x, T y) { this->x = x; this->y = y; };
 		Vec2<T>(T v = 0) { this->x = v; this->y = v; };
 
-
 		void fillArray(T arr[2]) {
 			arr[0] = this->x;
 			arr[1] = this->y;
@@ -105,40 +104,25 @@ namespace RG3GE {
 		int slot;
 	};
 
-    struct TransformUniforms {
-		int translation_uniform;
-		int origin_uniform;
-		int angle_uniform;
-		int scale_uniform;
-		int zlayer_uniform;
-    };
-    struct ScreenUniforms {
-		int v2screen_uniform;
-		int v2screenscale_uniform;
-		int v2screenoffset_uniform;
-    };
-    struct Common_ShaderAttributes {
-        uint32_t program;
-		int drawcolor_uniform;
-		int vertex_position_attribute;
-    };
-    struct Shape2DShader {
-        Common_ShaderAttributes common;
-        TransformUniforms transform;
-        ScreenUniforms screen;
+    struct Shader {
+        int u_shader_mode;
 
-		int vertex_color_attribute;
-    };
-    struct TextureShader {
-        Common_ShaderAttributes common;
-        TransformUniforms transform;
-        ScreenUniforms screen;
+        int u_screen;
+        
+        int u_translation;
+        int u_origin;
+        int u_zlayer;
+        int u_angle;
+        int u_scale;
 
-		int vertexUV_attribute;
-        int uv_offset_uniform;
-        int crop_size_uniform;
+        int u_textureCrop;
 
-		int texture_uniform;
+        int u_drawcolor;
+        int u_texture;
+
+        int a_position;
+        int a_color;
+        int a_uvCoords;
     };
 
 	/**
@@ -311,11 +295,8 @@ namespace RG3GE {
 		Vec2<float> windowScale;
 		Uint32 ticks;
 
-		void _applyTransform(const TransformUniforms&, Transform& tr, float zLayer);
+		void _applyTransform(Transform& tr, float zLayer);
 		void _applyScreenSize();
-
-        Shape2DShader _gl_shader_shape2d;
-        TextureShader _gl_shader_texture;
 
 		Shape2D pixel;
 		Shape2D line;
@@ -328,6 +309,9 @@ namespace RG3GE {
 		std::unordered_set<Uint8> mouse_pressed;
 		std::unordered_set<Uint8> mouse_released;
 		std::unordered_set<Uint8> mouse_held;
+
+        int program;
+        Shader shader;
 	};
 
 }
